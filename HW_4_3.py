@@ -5,7 +5,7 @@ import re
 def get_text():
     return """
 homEwork:
-tHis iz your homeWork, copy these Text to variable.
+ tHis iz your homeWork, copy these Text to variable.
 
 You NEED TO normalize it fROM letter CASEs point oF View. also, create one MORE senTENCE witH LAST WoRDS of each existING SENtence and add it to the END OF this Paragraph.
 
@@ -16,37 +16,73 @@ last iz TO calculate nuMber OF Whitespace characteRS in this Tex. caREFULL, not 
 
 
 # Normalize the text in terms of letter cases
-def normalize_text(text):
-    return text.lower().capitalize()
+def normalize_text_case(text):
+    """
+    Converts the entire text to lowercase and capitalizes the first
+    letter of each sentence.
+    """
+    sentences = text.replace('?', '.').replace('!', '.').split('.')
+    corrected_sentences = [sentence.strip().capitalize() for sentence in sentences if sentence.strip()]
+    return corrected_sentences
 
 
 # Create a sentence with the last words of each existing sentence and add it to the end of the paragraph
-def add_last_words_sentence(text):
-    sentences = re.split(r'(?<=[.!?]) +', text.strip())
-    last_words_sentence = ' '.join(sentence.rstrip(' .!?').split()[-1] for sentence in sentences) + '.'
-    return text + ' ' + last_words_sentence.capitalize()
+def create_sentence_with_last_words(sentences):
+    """
+    Creates a new sentence using the last word of each sentence.
+    Capitalizes the sentence and adds a period at the end.
+    """
+    last_words = [sentence.split()[-1] for sentence in sentences]
+    return ' '.join(last_words).capitalize() + '.'
 
 
 # Fix the misspelling "iz" to "is" but only when it is a mistake
-def fix_misspellings(text):
-    return re.sub(r'\biz\b', 'is', text)
+def correct_misspelling(sentences):
+    """
+    Corrects the misspelling of 'iz' with 'is' only when it makes sense.
+    Handles cases where 'iz' is surrounded by punctuation.
+    """
+    sentences = [
+        re.sub(r'\biz\b', 'is', re.sub(r'(?<=\w)“iz”', ' “is”', sentence)) for sentence in sentences
+    ]
+    return sentences
 
 
 # Calculate the number of whitespace characters in the text
-def count_whitespace(text):
-    return len(re.findall(r'\s', text))
+def count_whitespace_characters(text):
+    """
+    Counts all whitespace characters in the given text.
+    """
+    return sum(1 for char in text if char.isspace())
 
 
 # Main function to execute all steps
 def process_text():
+    """
+    Orchestrates the entire text processing pipeline.
+    """
+    # Get text
     text = get_text()
-    text = normalize_text(text)
-    text = add_last_words_sentence(text)
-    text = fix_misspellings(text)
-    whitespace_count = count_whitespace(text)
 
-    print("\nNumber of whitespace characters:", whitespace_count)
+    # Normalize letter cases
+    sentences = normalize_text_case(text)
+
+    # Fix misspellings
+    corrected_sentences = correct_misspelling(sentences)
+
+    # Add new sentence with last words
+    new_sentence = create_sentence_with_last_words(corrected_sentences)
+    normalized_text = '. '.join(corrected_sentences) + '. ' + new_sentence
+
+    # Calculate whitespace characters
+    whitespace_count = count_whitespace_characters(normalized_text)
+
+    return normalized_text, whitespace_count
 
 
-# Execute the main function
-process_text()
+# Process the text
+final_text, whitespace_count = process_text()
+
+# Print results
+print(final_text)
+print("\nNumber of whitespace characters:", whitespace_count)
