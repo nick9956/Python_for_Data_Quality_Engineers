@@ -81,8 +81,10 @@ def process_text():
 
 
 # Process the text
-final_text, whitespace_count = process_text()
+if __name__ == "__main__":
+    final_text, whitespace_count = process_text()
 
-# Print results
-print(final_text)
-print("\nNumber of whitespace characters:", whitespace_count)
+    # Print results
+    print("Normalized Text:\n")
+    print(final_text)
+    print("\nNumber of whitespace characters:", whitespace_count)
