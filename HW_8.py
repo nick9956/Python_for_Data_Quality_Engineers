@@ -1,4 +1,5 @@
 import csv
+from json import load
 from datetime import datetime
 from random import choice
 from os import path, remove
@@ -49,6 +50,48 @@ class FileReader:  # Creating a class to handle file reading operations
         with open(self.file_path, 'r', encoding='utf8') as file:  # Opening the file in read mode with UTF-8 encoding
             records = file.readlines()  # Reading all lines into the list
         return records  # Returning the list of records
+
+    def delete_read_file(self):  # Method to delete the file after its content is read
+        remove(self.file_path)  # Using the remove function to delete the file
+
+
+class JSONReader:  # Creating a class to handle JSON file reading operations
+
+    def __init__(self, file_path: str = 'data.json'): # Constructor to initialize the file path
+        self.file_path = file_path # Storing the file path in an instance variable
+
+    def load_file(self):
+        data = []  # Initialize an empty list to store the loaded JSON data
+        with open(self.file_path, 'r', encoding='utf8') as file:  # Open the file in read mode with UTF-8 encoding
+            data = load(file)  # Use the `load` function from the `json` module to parse the file content into a Python object
+        return data  # Return the parsed JSON data as a Python object (e.g., list or dictionary)
+
+    def transform_to_text(self):  
+        records = self.load_file()  # Load records from the JSON file
+        data = []  # Initialize an empty list to store formatted text data
+        for record in records:  # Iterate over each record in the loaded JSON data
+            method = record['method']  # Extract the method (News, Private ad, or Joke)
+            hyphens = ' -------------------------\n'  # Define a separator string for formatting
+            text = record['text']  # Extract the text content of the record
+
+            # Format each block
+            entry = [f"{method}{hyphens}{text}\n"]  # Start formatting each record block with method and text
+            if method == 'News':
+                entry.append(f"{record['city']}, {record['current_date']}\n")  # Append city and current date for News
+            elif method == 'Private ad':
+                entry.append(f"Actual until: {record['actual_until']}, {record['days_left']}\n")  # Append expiration details for Private Ad
+            elif method == 'Joke of the day':
+                entry.append(f"{record['funny_mark']}\n")  # Append funny meter for Joke of the Day
+
+            # Append an additional newline after each block
+            entry.append("\n")  # Add a newline separator after each record block
+            data.extend(entry)  # Extend the list with the formatted record data
+
+        # Remove the last newline (to avoid trailing newline at the file's end)
+        if data and data[-1] == "\n":  
+            data.pop()  # Remove the last newline if it exists
+
+        return data  # Return the fully formatted data list
 
     def delete_read_file(self):  # Method to delete the file after its content is read
         remove(self.file_path)  # Using the remove function to delete the file
@@ -114,6 +157,18 @@ class FileProcessor:
         self.publisher.publish_records(records)
 
 
+class JSONProcessor:
+
+    def __init__(self, reader_path='data.json', publisher_path='news_feed.txt'):
+        self.reader = JSONReader(reader_path) # Pass the reader_path to the JSONReader instance
+        self.publisher = FilePublisher(publisher_path) # Pass the publisher_path to the JSONPublisher instance
+
+    def process_file(self):
+        records = self.reader.transform_to_text()
+        self.reader.delete_read_file()
+        self.publisher.publish_records(records)
+
+
 class CSVGenerator:
 
     def __init__(self, file_path: str = 'news_feed.txt'):
@@ -174,7 +229,7 @@ class CSVGenerator:
 
 while True:  # Starting an infinite loop to interact with the user
     print("\n------------------------------------------")  # Printing a separator
-    method = input('How do you want to add a data? Please choose from the variants below:\n1 - Manually, 2 - From File\nTo exit, type "exit"\n')  # Prompting the user for input method
+    method = input('How do you want to add a data? Please choose from the variants below:\n1 - Manually, 2 - From Text File, 3 - From JSON File\nTo exit, type "exit"\n')  # Prompting the user for input method
 
     if method.lower() == 'exit':  # If the user selects "exit", break the loop and end the program
         break
@@ -190,13 +245,22 @@ while True:  # Starting an infinite loop to interact with the user
         if location == '1':  # If the user selects the default location
             processor = FileProcessor()
             processor.process_file()
-        elif location == '2':  # If the user selects a new file location
+        elif location == '2':  # If the user selects a new text file location
             new_location = input('Please enter new file location\n')  # Prompting for the new file path
             processor = FileProcessor(reader_path=new_location)  # Pass the new location to FileProcessor
             processor.process_file()
         else:  # If an invalid option is selected for the file location
             print('Unknown option was selected. Please try again\n')  # Prompting the user to try again
             continue  # Skipping the rest of the loop iteration
+    elif method == '3':
+        location = input('Do you want to use default path file location or enter new?\n1 - Default, 2 - New\n')
+        if location == '1': # If the user selects the default location
+            processor = JSONProcessor()
+            processor.process_file()
+        elif location == '2': # If the user selects a new json file location
+            new_location = input('Please enter new file location\n') # Prompting for the new file path
+            processor = JSONProcessor(reader_path=new_location) # Pass the new location to FileProcessor
+            processor.process_file()
     else:  # If an invalid input method is selected
         print('Unknown option was selected. Please try again\n')  # Prompting the user to try again
         continue  # Skipping the rest of the loop iteration
