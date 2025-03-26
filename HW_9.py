@@ -1,4 +1,5 @@
 import csv
+import xml.etree.ElementTree as ET
 from json import load
 from datetime import datetime
 from random import choice
@@ -66,8 +67,59 @@ class JSONReader:  # Creating a class to handle JSON file reading operations
             data = load(file)  # Use the `load` function from the `json` module to parse the file content into a Python object
         return data  # Return the parsed JSON data as a Python object (e.g., list or dictionary)
 
-    def transform_to_text(self):  
-        records = self.load_file()  # Load records from the JSON file
+    def delete_read_file(self):  # Method to delete the file after its content is read
+        remove(self.file_path)  # Using the remove function to delete the file
+
+
+class XMLReader:  # Creating a class to handle XML file reading operations
+
+    def __init__(self, file_path: str = 'data.xml'):  # Constructor to initialize the default XML file path
+        self.file_path = file_path  # Storing the file path in an instance variable
+
+    def read_file(self):  # Method to read and parse the XML file
+        root = ET.parse(self.file_path)  # Parse the XML file and get the root element
+        data = []  # Initialize an empty list to store the parsed data
+        for item in root.findall('item'):  # Iterate over each 'item' element in the XML
+            item_data = {}  # Initialize an empty dictionary to store the current item's data
+            item_data['method'] = item.find('method').text  # Extract the 'method' field and add it to the dictionary
+            item_data['text'] = item.find('text').text  # Extract the 'text' field and add it to the dictionary
+
+            # Check for other optional fields and add them to the dictionary if they exist
+            city = item.find('city')  # Try to find the 'city' field
+            if city is not None:  # If the 'city' field exists
+                item_data['city'] = city.text  # Add the 'city' value to the dictionary
+
+            current_date = item.find('current_date')  # Try to find the 'current_date' field
+            if current_date is not None:  # If the 'current_date' field exists
+                item_data['current_date'] = current_date.text  # Add the 'current_date' value to the dictionary
+
+            actual_until = item.find('actual_until')  # Try to find the 'actual_until' field
+            if actual_until is not None:  # If the 'actual_until' field exists
+                item_data['actual_until'] = actual_until.text  # Add the 'actual_until' value to the dictionary
+
+            days_left = item.find('days_left')  # Try to find the 'days_left' field
+            if days_left is not None:  # If the 'days_left' field exists
+                item_data['days_left'] = days_left.text  # Add the 'days_left' value to the dictionary
+
+            funny_mark = item.find('funny_mark')  # Try to find the 'funny_mark' field
+            if funny_mark is not None:  # If the 'funny_mark' field exists
+                item_data['funny_mark'] = funny_mark.text  # Add the 'funny_mark' value to the dictionary
+
+            data.append(item_data)  # Add the fully constructed dictionary for the current item to the data list
+        return data  # Return the list of parsed data dictionaries
+
+    def delete_read_file(self):  # Method to delete the XML file after its content is read
+        remove(self.file_path)  # Use the `remove` function from the `os` module to delete the file
+
+
+class FilePublisher:  # Creating a class to handle file writing operations
+    def __init__(self, file_path: str = 'news_feed.txt'):  # Constructor to initialize the file path
+        self.file_path = file_path  # Storing the file path in an instance variable
+
+    def check_file_size(self):  # Method to check the size of the file
+        return path.getsize(self.file_path)  # Returning the size of the file in bytes
+
+    def transform_to_text(self, records):
         data = []  # Initialize an empty list to store formatted text data
         for record in records:  # Iterate over each record in the loaded JSON data
             method = record['method']  # Extract the method (News, Private ad, or Joke)
@@ -92,17 +144,6 @@ class JSONReader:  # Creating a class to handle JSON file reading operations
             data.pop()  # Remove the last newline if it exists
 
         return data  # Return the fully formatted data list
-
-    def delete_read_file(self):  # Method to delete the file after its content is read
-        remove(self.file_path)  # Using the remove function to delete the file
-
-
-class FilePublisher:  # Creating a class to handle file writing operations
-    def __init__(self, file_path: str = 'news_feed.txt'):  # Constructor to initialize the file path
-        self.file_path = file_path  # Storing the file path in an instance variable
-
-    def check_file_size(self):  # Method to check the size of the file
-        return path.getsize(self.file_path)  # Returning the size of the file in bytes
 
     def publish_record(self, data_type):  # Method to interactively publish a single record
         with open(self.file_path, 'a') as file:  # Opening the file in append mode
@@ -164,8 +205,22 @@ class JSONProcessor:
         self.publisher = FilePublisher(publisher_path) # Pass the publisher_path to the FilePublisher instance
 
     def process_file(self):
-        records = self.reader.transform_to_text()
+        list_of_dicts = self.reader.load_file()
         self.reader.delete_read_file()
+        records = self.publisher.transform_to_text(list_of_dicts)
+        self.publisher.publish_records(records)
+
+
+class XMLProcessor:
+
+    def __init__(self, reader_path='data.xml', publisher_path='news_feed.txt'):
+        self.reader = XMLReader(reader_path) # Pass the reader_path to the JSONReader instance
+        self.publisher = FilePublisher(publisher_path) # Pass the publisher_path to the FilePublisher instance
+
+    def process_file(self):
+        list_of_dicts = self.reader.read_file()
+        self.reader.delete_read_file()
+        records = self.publisher.transform_to_text(list_of_dicts)
         self.publisher.publish_records(records)
 
 
@@ -229,7 +284,7 @@ class CSVGenerator:
 
 while True:  # Starting an infinite loop to interact with the user
     print("\n------------------------------------------")  # Printing a separator
-    method = input('How do you want to add a data? Please choose from the variants below:\n1 - Manually, 2 - From Text File, 3 - From JSON File\nTo exit, type "exit"\n')  # Prompting the user for input method
+    method = input('How do you want to add a data? Please choose from the variants below:\n1 - Manually, 2 - From Text File, 3 - From JSON File, 4 - From XML File\nTo exit, type "exit"\n')  # Prompting the user for input method
 
     if method.lower() == 'exit':  # If the user selects "exit", break the loop and end the program
         break
@@ -260,6 +315,15 @@ while True:  # Starting an infinite loop to interact with the user
         elif location == '2': # If the user selects a new json file location
             new_location = input('Please enter new file location\n') # Prompting for the new file path
             processor = JSONProcessor(reader_path=new_location) # Pass the new location to FileProcessor
+            processor.process_file()
+    elif method == '4':
+        location = input('Do you want to use default path file location or enter new?\n1 - Default, 2 - New\n')
+        if location == '1':
+            processor = XMLProcessor()
+            processor.process_file()
+        elif location == '2':
+            new_location = input('Please enter new file location\n')
+            processor = XMLProcessor(reader_path=new_location)
             processor.process_file()
     else:  # If an invalid input method is selected
         print('Unknown option was selected. Please try again\n')  # Prompting the user to try again
