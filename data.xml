@@ -1,0 +1,19 @@
+<root>
+    <item>
+        <method>News</method>
+        <text>News text</text>
+        <city>Warsaw</city>
+        <current_date>2024-07-20 17:30</current_date>
+    </item>
+    <item>
+        <method>Private ad</method>
+        <text>Ad</text>
+        <actual_until>2024-07-21</actual_until>
+        <days_left>31 days left</days_left>
+    </item>
+    <item>
+        <method>Joke of the day</method>
+        <text>Hahah</text>
+        <funny_mark>Funny meter - nine of ten</funny_mark>
+    </item>
+</root>

@@ -1,0 +1,19 @@
+[
+	{
+		"method": "News",
+		"text": "News text",
+		"city": "Warsaw",
+		"current_date": "2024-07-20 17:30"
+	},
+	{
+		"method": "Private ad",
+		"text": "Ad",
+		"actual_until": "2024-07-21",
+		"days_left": "31 days left"
+	},
+	{
+		"method": "Joke of the day",
+		"text": "Hahah",
+		"funny_mark": "Funny meter - nine of ten"
+	}
+]
